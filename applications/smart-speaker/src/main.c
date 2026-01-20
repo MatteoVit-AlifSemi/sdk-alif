@@ -307,42 +307,20 @@ static void on_gapc_info_req(uint8_t const conidx, uint32_t const metainfo, uint
 static void on_gapc_pairing_req(uint8_t const conidx, uint32_t const metainfo,
 				uint8_t const auth_level)
 {
-	LOG_INF("Client %u pairing requested. auth_level:%u", conidx, auth_level);
+	LOG_DBG("Client %u pairing requested. auth_level:%u", conidx, auth_level);
 
-	// GAP_AUTH_REQ_MITM_BOND
-	// GAP_AUTH_REQ_SEC_CON_BOND
-
-	gapc_pairing_t pairing_info = {
-		.auth = GAP_AUTH_REQ_NO_MITM_NO_BOND,
-		.iocap = GAP_IO_CAP_NO_INPUT_NO_OUTPUT,
-		.ikey_dist = GAP_KDIST_ENCKEY | GAP_KDIST_IDKEY,
-		.key_size = GAP_KEY_LEN,
-		.oob = GAP_OOB_AUTH_DATA_NOT_PRESENT,
-		.rkey_dist = GAP_KDIST_ENCKEY | GAP_KDIST_IDKEY,
-	};
-
-	if (IS_ENABLED(CONFIG_BONDING_ALLOWED) && (auth_level & GAP_AUTH_BOND)) {
-		LOG_INF("bonding");
-		pairing_info.auth = GAP_AUTH_REQ_SEC_CON_BOND;
-		pairing_info.iocap = GAP_IO_CAP_DISPLAY_ONLY;
-	} else if (auth_level & GAP_AUTH_SEC_CON) {
-		LOG_INF("sec con");
-		pairing_info.auth = GAP_AUTH_SEC_CON;
-	}
-#if 0
 	gapc_pairing_t pairing_info = {
 		.auth = GAP_AUTH_REQ_SEC_CON_BOND,
-		.iocap = GAP_IO_CAP_NO_INPUT_NO_OUTPUT,
+		.iocap = GAP_IO_CAP_DISPLAY_ONLY,
 		.ikey_dist = GAP_KDIST_ENCKEY | GAP_KDIST_IDKEY,
 		.key_size = GAP_KEY_LEN,
 		.oob = GAP_OOB_AUTH_DATA_NOT_PRESENT,
 		.rkey_dist = GAP_KDIST_ENCKEY | GAP_KDIST_IDKEY,
 	};
-#endif
 
-	/*if (auth_level & GAP_AUTH_SEC_CON) {
-		pairing_info.auth = GAP_AUTH_REQ_SEC_CON_NO_BOND;
-	}*/
+	if (auth_level & GAP_AUTH_SEC_CON) {
+		pairing_info.auth = GAP_AUTH_REQ_SEC_CON_BOND;
+	}
 
 	uint16_t const status = gapc_le_pairing_accept(conidx, true, &pairing_info, 0);
 
