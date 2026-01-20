@@ -33,4 +33,16 @@ int unicast_sink_adv_start(void const * const p_address);
  */
 int unicast_sink_adv_stop(void);
 
+/**
+ * @brief Increase the volume
+ *
+ */
+void volume_increase(void);
+
+/**
+ * @brief Decrease the volume
+ *
+ */
+void volume_decrease(void);
+
 #endif /* _UNICAST_SINK_H */

@@ -93,6 +93,9 @@ LOG_MODULE_REGISTER(unicast_sink, CONFIG_UNICAST_SINK_LOG_LEVEL);
 #define I2S_SOURCE_SAMPLE_RATE I2S_SINK_SAMPLE_RATE
 #endif
 
+#define VOLUME_STEP 10
+#define VOLUME_MAX  127
+
 enum {
 	ASE_DIR_UNKNOWN = 0,
 	ASE_DIR_SOURCE,
@@ -1117,7 +1120,7 @@ static void volume_renderer_cb_bond_data(uint8_t const conidx, uint8_t const cli
 
 static void volume_renderer_cb_volume(uint8_t const volume, uint8_t mute, bool const local)
 {
-	LOG_DBG("Volume updated (volume = %d, mute = %d, local = %d)", volume, mute, local);
+	LOG_INF("Volume updated (volume = %d, mute = %d, local = %d)", volume, mute, local);
 
 	/* Codec API uses 0.5dB steps so divide by 2 to fit into 0...127.
 	 *   WM8904 codec uses 1dB steps so total volume will be divided by 4 to match
@@ -1133,6 +1136,35 @@ static void volume_renderer_cb_volume(uint8_t const volume, uint8_t mute, bool c
 static void volume_renderer_cb_flags(uint8_t const flags)
 {
 	LOG_DBG("Volume Control Server Flags updated (flags = 0x%02X)", flags);
+}
+
+void volume_decrease(void) 
+{
+	arc_vcs_control(ARC_VC_OPCODE_VOL_DOWN, 0);
+	/*if (env_volume.volume <= VOLUME_STEP)
+		env_volume.volume = 0;
+	else
+		env_volume.volume -= VOLUME_STEP;
+
+	LOG_INF("Volume updated (volume = %d)", env_volume.volume);
+
+	audio_datapath_channel_volume_sink((env_volume.volume >> 1), 0);
+
+	storage_save(SETTINGS_NAME_VOLUME, &env_volume, sizeof(env_volume));*/
+}
+
+void volume_increase(void)
+{
+	arc_vcs_control(ARC_VC_OPCODE_VOL_UP, 0);
+	/*env_volume.volume += VOLUME_STEP;
+	if (env_volume.volume > VOLUME_MAX)
+		env_volume.volume = VOLUME_MAX;
+
+	LOG_INF("Volume updated (volume = %d)", env_volume.volume);
+
+	audio_datapath_channel_volume_sink((env_volume.volume >> 1), 0);
+
+	storage_save(SETTINGS_NAME_VOLUME, &env_volume, sizeof(env_volume));*/
 }
 
 int init_volume_control_service(void)
