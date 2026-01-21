@@ -175,6 +175,7 @@ static void on_le_connection_req(uint8_t const conidx, uint32_t const metainfo,
 				 const gapc_le_con_param_t *const p_con_params,
 				 uint8_t const clk_accuracy)
 {
+	uint16_t err;
 	bool const public = (p_peer_addr->addr_type == GAP_ADDR_PUBLIC);
 
 	app_con_info.conidx = conidx;
@@ -211,6 +212,9 @@ static void on_le_connection_req(uint8_t const conidx, uint32_t const metainfo,
 	LOG_DBG("  Peer address: %s %02X:%02X:%02X:%02X:%02X:%02X", public ? "Public" : "Private",
 		p_peer_addr->addr[5], p_peer_addr->addr[4], p_peer_addr->addr[3],
 		p_peer_addr->addr[2], p_peer_addr->addr[1], p_peer_addr->addr[0]);
+
+	err = acc_mcc_discover(conidx, 0, GATT_INVALID_HDL, GATT_INVALID_HDL);
+	LOG_INF("acc_mcc_discover returned %d", err);
 }
 
 static const struct gapc_connection_req_cb gapc_con_cbs = {

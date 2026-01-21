@@ -49,7 +49,7 @@ static int cmd_track_next(const struct shell *sh, size_t argc, char *argv[])
 {
 	int err;
 
-	// TODO
+	next_track();
 		
     shell_fprintf(sh, SHELL_NORMAL, "Next track\n");
 	return 0;
@@ -59,7 +59,7 @@ static int cmd_track_prev(const struct shell *sh, size_t argc, char *argv[])
 {
 	int err;
 
-	// TODO
+	prev_track();
 	
 	shell_fprintf(sh, SHELL_NORMAL, "Prev track\n");
 	return 0;

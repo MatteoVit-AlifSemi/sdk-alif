@@ -19,6 +19,7 @@
 #include "hap_has.h"
 #include "hap.h"
 #include "arc_vcs.h"
+#include "acc_mcc.h"
 
 #include "bluetooth/le_audio/audio_utils.h"
 
@@ -1195,6 +1196,156 @@ int init_volume_control_service(void)
 }
 
 /* ---------------------------------------------------------------------------------------- */
+/* Media Control Client */
+
+static void media_control_service_discovery(uint8_t event, uint8_t conidx, uint16_t status);
+
+// Event values for Service Discovery state machine
+enum media_client_event_service_discovery
+{
+    // Request to start
+    EVENT_SERVICE_DISCOVERY_START = 0U,
+    // Discovery of Media Control Service instances has been completed
+    EVENT_SERVICE_CONTENT_DISCOVERED,
+};
+
+
+static void media_control_client_cb_cmp_evt(uint8_t cmd_type, uint16_t status,
+    uint8_t con_lid, uint8_t media_lid, uint8_t param, uint8_t result) 
+{
+	LOG_INF("media_control_client_cb_cmp_evt, cmd_code %x", cmd_type);
+	switch (cmd_type)
+    {
+        case ACC_MCC_CMD_TYPE_DISCOVER:
+            media_control_service_discovery(EVENT_SERVICE_CONTENT_DISCOVERED, con_lid, NULL);
+        	break;
+        case ACC_MCC_CMD_TYPE_CONTROL:
+            /*ASSERT_WARN(status == GAF_ERR_NO_ERROR, status, cmd_type);
+
+            if ((status == GAF_ERR_NO_ERROR) && (param == ACC_MC_OPCODE_FIRST_TRACK))
+            {
+                input_prov_audio_control_t params_audio_control = {
+                    .conidx = conidx,
+                    .media_lid = media_lid,
+                };
+
+                applet_media_client_cb_input_prov(INPUT_TYPE_PLAY, &params_audio_control);
+            }*/
+        	break;
+		case ACC_MCC_CMD_TYPE_GET:
+			break;
+		case ACC_MCC_CMD_TYPE_SET_CFG:
+			break;
+		case ACC_MCC_CMD_TYPE_SET_OBJECT_ID:
+			break;
+		case ACC_MCC_CMD_TYPE_SEARCH:
+			break;
+        default:
+			LOG_WRN("media_control_client_cb_cmp_evt unsupported command, cmd_code %x", cmd_type);
+			break;
+	}	
+}
+
+static void media_control_service_discovery(uint8_t event, uint8_t conidx, uint16_t err) {
+	if (err == GAP_ERR_NO_ERROR) {
+		switch (event) {
+		case EVENT_SERVICE_DISCOVERY_START:
+			acc_mcc_discover(conidx, 1, GATT_MIN_HDL, GATT_MAX_HDL);
+            break;
+		case EVENT_SERVICE_CONTENT_DISCOVERED:
+			LOG_INF("media_control_service_discovery discovered");
+			/*err = basc_get(conidx, 0, BASC_CHAR_TYPE_LEVEL);
+			if (err) {
+				LOG_ERR("Error reading level 0x%02x", err);
+			}*/
+			break;
+
+		default:
+			break;
+		}
+	} else {
+		LOG_ERR("service discovery process error 0x%02x\n", err);
+	}
+}
+
+
+static void media_control_client_cb_object_id(uint8_t con_lid, uint8_t media_lid, 
+	uint8_t char_type, const acc_mc_object_id_t* p_obj_id) 
+{
+	LOG_INF("media_control_client_cb_object_id");
+}
+
+static void media_control_client_cb_track_changed(uint8_t con_lid, uint8_t media_lid) 
+{
+	LOG_INF("media_control_client_cb_track_changed");
+}
+
+static void media_control_client_cb_value_long(uint8_t con_lid, uint8_t media_lid, uint8_t char_type,
+    uint16_t val_len, const char* p_val) 
+{
+	LOG_INF("media_control_client_cb_value_long");
+}
+
+static void media_control_client_cb_value(uint8_t con_lid, uint8_t media_lid, uint8_t char_type, 
+	uint32_t val) 
+{
+	LOG_INF("media_control_client_cb_value");
+}
+
+static void media_control_client_cb_bond_data(uint8_t con_lid, uint8_t media_lid, 
+	const acc_mcc_mcs_info_t* p_mcs_info) 
+{
+	LOG_INF("media_control_client_cb_bond_data");
+}
+
+static void media_control_client_cb_included_svc(uint8_t con_lid, uint8_t media_lid, 
+	uint16_t shdl, uint16_t ehdl)
+{
+	LOG_INF("media_control_client_cb_included_svc");
+}
+
+static void media_control_client_cb_svc_changed(uint8_t con_lid)
+{
+	LOG_INF("media_control_client_cb_svc_changed");
+}
+
+int init_media_control_client(void)
+{
+	uint16_t err;
+		
+	static const acc_mcc_cb_t cbs_acc_mcc = {
+		.cb_cmp_evt = media_control_client_cb_cmp_evt,
+		.cb_object_id = media_control_client_cb_object_id,
+		.cb_track_changed = media_control_client_cb_track_changed,
+		.cb_value_long = media_control_client_cb_value_long,
+		.cb_value = media_control_client_cb_value,
+		.cb_bond_data = media_control_client_cb_bond_data,
+		.cb_included_svc = media_control_client_cb_included_svc,
+		.cb_svc_changed = media_control_client_cb_svc_changed,
+	};
+
+	err = acc_mcc_configure(&cbs_acc_mcc, 0);
+
+	if (err != GAF_ERR_NO_ERROR) {
+		LOG_ERR("Unable to configure Media Control Client! Error %u (0x%02X)", err, err);
+		return -1;
+	}
+
+	LOG_INF("Media Control Client is configured");
+
+	return 0;
+}
+
+void next_track(void) {
+	//acc_mcc_control(con_lid, media_lid, ACC_MC_OPCODE_NEXT_TRACK, 0, 0);
+}
+
+
+void prev_track(void) {
+	//acc_mcc_control(con_lid, media_lid, ACC_MC_OPCODE_PREV_TRACK, 0, 0);
+}
+
+/* ---------------------------------------------------------------------------------------- */
 
 int unicast_sink_init(void)
 {
@@ -1272,6 +1423,10 @@ int unicast_sink_init(void)
 	LOG_DBG("BAP capabilities are configured");
 
 	if (init_volume_control_service()) {
+		return -1;
+	}
+
+	if (init_media_control_client()) {
 		return -1;
 	}
 

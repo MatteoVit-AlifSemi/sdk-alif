@@ -45,4 +45,17 @@ void volume_increase(void);
  */
 void volume_decrease(void);
 
+
+/**
+ * @brief Next track
+ *
+ */
+void next_track(void);
+
+/**
+ * @brief Previous track
+ *
+ */
+void prev_track(void);
+
 #endif /* _UNICAST_SINK_H */
