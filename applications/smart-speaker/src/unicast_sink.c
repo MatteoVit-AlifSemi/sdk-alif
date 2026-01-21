@@ -198,6 +198,10 @@ static const char *location_name[GAF_LOC_RIGHT_SURROUND_POS + 1] = {
 	[GAF_LOC_RIGHT_SURROUND_POS] = "RIGHT SURROUND",
 };
 
+// TMP
+uint8_t mcc_con_lid = 0;
+uint8_t mcc_media_lid = 0;
+
 /* ---------------------------------------------------------------------------------------- */
 
 #define WORKER_PRIORITY   2
@@ -1217,7 +1221,16 @@ static void media_control_client_cb_cmp_evt(uint8_t cmd_type, uint16_t status,
 	switch (cmd_type)
     {
         case ACC_MCC_CMD_TYPE_DISCOVER:
-            media_control_service_discovery(EVENT_SERVICE_CONTENT_DISCOVERED, con_lid, NULL);
+            
+			if (status != GAP_ERR_NO_ERROR) {
+				LOG_ERR("Failed to discover Media Control Service: 0x%02x", status);
+				media_control_service_discovery(EVENT_SERVICE_DISCOVERY_START, con_lid, GAP_ERR_NO_ERROR);					
+				break;
+			}
+
+			LOG_INF("Media control service discovered");
+
+			media_control_service_discovery(EVENT_SERVICE_CONTENT_DISCOVERED, con_lid, GAP_ERR_NO_ERROR);		
         	break;
         case ACC_MCC_CMD_TYPE_CONTROL:
             /*ASSERT_WARN(status == GAF_ERR_NO_ERROR, status, cmd_type);
@@ -1248,12 +1261,13 @@ static void media_control_client_cb_cmp_evt(uint8_t cmd_type, uint16_t status,
 
 static void media_control_service_discovery(uint8_t event, uint8_t conidx, uint16_t err) {
 	if (err == GAP_ERR_NO_ERROR) {
+		LOG_INF("media_control_service_discovery %d", event);
 		switch (event) {
 		case EVENT_SERVICE_DISCOVERY_START:
-			acc_mcc_discover(conidx, 1, GATT_MIN_HDL, GATT_MAX_HDL);
+			acc_mcc_discover(conidx, 10, GATT_MIN_HDL, GATT_MAX_HDL);
             break;
 		case EVENT_SERVICE_CONTENT_DISCOVERED:
-			LOG_INF("media_control_service_discovery discovered");
+			LOG_INF("media_control_service_discovery discovered %d", conidx);
 			/*err = basc_get(conidx, 0, BASC_CHAR_TYPE_LEVEL);
 			if (err) {
 				LOG_ERR("Error reading level 0x%02x", err);
@@ -1278,24 +1292,65 @@ static void media_control_client_cb_object_id(uint8_t con_lid, uint8_t media_lid
 static void media_control_client_cb_track_changed(uint8_t con_lid, uint8_t media_lid) 
 {
 	LOG_INF("media_control_client_cb_track_changed");
+	mcc_con_lid = con_lid;
+	mcc_media_lid = media_lid;
 }
 
 static void media_control_client_cb_value_long(uint8_t con_lid, uint8_t media_lid, uint8_t char_type,
     uint16_t val_len, const char* p_val) 
 {
 	LOG_INF("media_control_client_cb_value_long");
+	switch (char_type)
+        {
+            case ACC_MC_CHAR_TYPE_TRACK_TITLE:
+				LOG_INF("Track title %s", p_val);
+            	break;
+
+            case ACC_MC_CHAR_TYPE_PLAYER_NAME:
+				LOG_INF("Player name %s", p_val);
+            	break;
+
+            default: { } break;
+        }
 }
 
 static void media_control_client_cb_value(uint8_t con_lid, uint8_t media_lid, uint8_t char_type, 
 	uint32_t val) 
 {
-	LOG_INF("media_control_client_cb_value");
+	LOG_INF("media_control_client_cb_value, con_lid %d, media_lid %d, type %d, value %d", con_lid, media_lid, char_type, val);
+	mcc_con_lid = con_lid;
+	mcc_media_lid = media_lid;
+	switch (char_type) {
+		case ACC_MC_CHAR_TYPE_TRACK_DURATION:
+			LOG_INF("Track duration %d", val / 100);
+			break;		
+		case ACC_MC_CHAR_TYPE_MEDIA_STATE:
+			switch (val) {
+				case ACC_MC_MEDIA_STATE_INACTIVE:
+					LOG_INF("State inactive");
+					break;
+				case ACC_MC_MEDIA_STATE_PLAYING:
+					LOG_INF("State playing");
+					break;
+				case ACC_MC_MEDIA_STATE_PAUSED:
+					LOG_INF("State paused");
+					break;
+				case ACC_MC_MEDIA_STATE_SEEKING:
+					LOG_INF("State seeking");
+					break;
+			}			
+			break;	
+	}
 }
 
 static void media_control_client_cb_bond_data(uint8_t con_lid, uint8_t media_lid, 
 	const acc_mcc_mcs_info_t* p_mcs_info) 
 {
-	LOG_INF("media_control_client_cb_bond_data");
+	LOG_INF("media_control_client_cb_bond_data con lid %d, media lid %d", con_lid, media_lid);
+	/*if (p_mcs_info) {
+		LOG_INF("media_control_client_cb_bond_data Characteristics %s", p_mcs_info->char_info);
+		LOG_INF("media_control_client_cb_bond_data Descriptors %s", p_mcs_info->desc_info);
+	}*/
 }
 
 static void media_control_client_cb_included_svc(uint8_t con_lid, uint8_t media_lid, 
@@ -1337,12 +1392,18 @@ int init_media_control_client(void)
 }
 
 void next_track(void) {
-	//acc_mcc_control(con_lid, media_lid, ACC_MC_OPCODE_NEXT_TRACK, 0, 0);
+	//ACC_MC_OPCODE_NEXT_TRACK
+	//uint16_t err = acc_mcc_control(mcc_con_lid, mcc_media_lid, ACC_MC_OPCODE_PLAY, 0, 0);
+	uint16_t err = acc_mcc_next(mcc_con_lid, mcc_media_lid, true);
+	LOG_INF("next_track error %d, con lid %d, media lid %d", err, mcc_con_lid, mcc_media_lid);
 }
 
 
-void prev_track(void) {
-	//acc_mcc_control(con_lid, media_lid, ACC_MC_OPCODE_PREV_TRACK, 0, 0);
+void prev_track(void) {	
+	// ACC_MC_OPCODE_PREV_TRACK
+	//uint16_t err = acc_mcc_control(mcc_con_lid, mcc_media_lid, ACC_MC_OPCODE_PAUSE, 0, 0);
+	uint16_t err = acc_mcc_previous(mcc_con_lid, mcc_media_lid, true);
+	LOG_INF("next_track error %d, con lid %d, media lid %d", err, mcc_con_lid, mcc_media_lid);
 }
 
 /* ---------------------------------------------------------------------------------------- */

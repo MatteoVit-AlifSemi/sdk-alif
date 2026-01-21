@@ -212,9 +212,6 @@ static void on_le_connection_req(uint8_t const conidx, uint32_t const metainfo,
 	LOG_DBG("  Peer address: %s %02X:%02X:%02X:%02X:%02X:%02X", public ? "Public" : "Private",
 		p_peer_addr->addr[5], p_peer_addr->addr[4], p_peer_addr->addr[3],
 		p_peer_addr->addr[2], p_peer_addr->addr[1], p_peer_addr->addr[0]);
-
-	err = acc_mcc_discover(conidx, 0, GATT_INVALID_HDL, GATT_INVALID_HDL);
-	LOG_INF("acc_mcc_discover returned %d", err);
 }
 
 static const struct gapc_connection_req_cb gapc_con_cbs = {
@@ -258,6 +255,8 @@ static void on_gapc_pairing_succeed(uint8_t const conidx, uint32_t const metainf
 #if CONFIG_USE_DIRECT_ADVERTISING_WHEN_RESTART
 	storage_save(SETTINGS_NAME_PEER, &app_con_info.addr, sizeof(app_con_info.addr));
 #endif
+	uint16_t err = acc_mcc_discover(conidx, 1, GATT_INVALID_HDL, GATT_INVALID_HDL);
+	LOG_INF("acc_mcc_discover returned %d", err);
 }
 
 static void on_gapc_pairing_failed(uint8_t const conidx, uint32_t const metainfo,
@@ -396,7 +395,7 @@ static void on_bond_data_updated(uint8_t const conidx, uint32_t const metainfo,
 	LOG_INF("Client %u bond data updated: gatt_start_hdl:%u, gatt_end_hdl:%u, "
 		"svc_chg_hdl:%u, cli_info:%u, cli_feat:%u, srv_feat:%u",
 		conidx, p_data->gatt_start_hdl, p_data->gatt_end_hdl, p_data->svc_chg_hdl,
-		p_data->cli_info, p_data->cli_feat, p_data->srv_feat);
+		p_data->cli_info, p_data->cli_feat, p_data->srv_feat);	
 }
 
 static void on_name_get(uint8_t const conidx, uint32_t const metainfo, uint16_t const token,
