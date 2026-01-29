@@ -1148,33 +1148,13 @@ static void volume_renderer_cb_flags(uint8_t const flags)
 void volume_decrease(void) 
 {
 	uint16_t err = arc_vcs_volume_decrease(); 
-	LOG_INF("Volume decrease (error = %d)", err);
-	/*if (env_volume.volume <= VOLUME_STEP)
-		env_volume.volume = 0;
-	else
-		env_volume.volume -= VOLUME_STEP;
-
-	LOG_INF("Volume updated (volume = %d)", env_volume.volume);
-
-	audio_datapath_channel_volume_sink((env_volume.volume >> 1), 0);
-
-	storage_save(SETTINGS_NAME_VOLUME, &env_volume, sizeof(env_volume));*/
+	LOG_INF("Volume decrease (error = %d)", err);	
 }
 
 void volume_increase(void)
 {
 	uint16_t err = arc_vcs_volume_increase(); 
-	LOG_INF("Volume increase (error = %d)", err);
-	//arc_vcs_control(ARC_VC_OPCODE_VOL_UP, 0);
-	/*env_volume.volume += VOLUME_STEP;
-	if (env_volume.volume > VOLUME_MAX)
-		env_volume.volume = VOLUME_MAX;
-
-	LOG_INF("Volume updated (volume = %d)", env_volume.volume);
-
-	audio_datapath_channel_volume_sink((env_volume.volume >> 1), 0);
-
-	storage_save(SETTINGS_NAME_VOLUME, &env_volume, sizeof(env_volume));*/
+	LOG_INF("Volume increase (error = %d)", err);	
 }
 
 int init_volume_control_service(void)
@@ -1360,14 +1340,11 @@ static void media_control_client_cb_bond_data(uint8_t con_lid, uint8_t media_lid
 {
 	LOG_INF("media_control_client_cb_bond_data con lid %d, media lid %d", con_lid, media_lid);
 	if (p_mcs_info) {
-		LOG_INF("media_control_client_cb_bond_data UUID %d", p_mcs_info->uuid);
-		// ACC_MC_CHAR_TYPE_MAX
+		LOG_INF("media_control_client_cb_bond_data UUID %d", p_mcs_info->uuid);		
 		for (int i = 0; i < 5; i++) {
 			LOG_INF("media_control_client_cb_bond_data Characteristic [%d] properties %d", i, p_mcs_info->char_info[i].prop);
 			LOG_INF("media_control_client_cb_bond_data Characteristic [%d] value handle %d", i, p_mcs_info->char_info[i].val_hdl);
-		}
-		//LOG_INF("media_control_client_cb_bond_data SVC start handle %d", p_mcs_info->svc_info.shdl);
-		//LOG_INF("media_control_client_cb_bond_data SVC end handle %d", p_mcs_info->svc_info.ehdl);
+		}		
 	}
 }
 
@@ -1410,21 +1387,14 @@ int init_media_control_client(void)
 }
 
 void next_track(void) {
-	//ACC_MC_OPCODE_NEXT_TRACK
-	//uint16_t err = acc_mcc_control(mcc_con_lid, mcc_media_lid, ACC_MC_OPCODE_PLAY, 0, 0);
-	//uint16_t err = acc_mcc_next(mcc_con_lid, mcc_media_lid, true);
-	//uint16_t err = acc_mcc_get(mcc_con_lid, mcc_media_lid, ACC_MC_CHAR_TYPE_MEDIA_STATE);
-	uint16_t err = acc_mcc_play(mcc_con_lid, mcc_media_lid, true);
+	uint16_t err = acc_mcc_next(mcc_con_lid, mcc_media_lid, true);
 	LOG_INF("next_track error %d, con lid %d, media lid %d", err, mcc_con_lid, mcc_media_lid);
 }
 
 
 void prev_track(void) {	
-	// ACC_MC_OPCODE_PREV_TRACK
-	//uint16_t err = acc_mcc_control(mcc_con_lid, mcc_media_lid, ACC_MC_OPCODE_PAUSE, 0, 0);
-	//uint16_t err = acc_mcc_previous(mcc_con_lid, mcc_media_lid, true);
-	uint16_t err = acc_mcc_pause(mcc_con_lid, mcc_media_lid, true);
-	LOG_INF("next_track error %d, con lid %d, media lid %d", err, mcc_con_lid, mcc_media_lid);
+	uint16_t err = acc_mcc_previous(mcc_con_lid, mcc_media_lid, true);
+	LOG_INF("prev_track error %d, con lid %d, media lid %d", err, mcc_con_lid, mcc_media_lid);
 }
 
 /* ---------------------------------------------------------------------------------------- */
