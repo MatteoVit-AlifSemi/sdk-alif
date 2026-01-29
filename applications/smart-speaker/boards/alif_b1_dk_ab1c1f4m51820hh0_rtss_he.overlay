@@ -25,6 +25,7 @@
 		audio-codec = &wm8904;
 		i2s-bus = &i2s0;
 		/*i2s-mic = &i2s2;*/
+		pdm-audio = &lppdm;
 	};
 
 	/delete-node/ buttons;
@@ -85,4 +86,25 @@
 
 &i2s1 {
 	status = "disabled";
+};
+
+&lppdm {
+	status = "okay";
+};
+
+&ospi0 {
+	bus-speed = <80000000>;
+	status = "okay";
+};
+
+/ {
+	/* Compile-time assertion: ethosu0 must exist */
+	ethosu_u55_check {
+		compatible = "vnd,ethosu-u55-check";
+		ethosu-node = <&ethosu0>;
+	};
+};
+
+&ethosu0 {
+	status = "okay";
 };
