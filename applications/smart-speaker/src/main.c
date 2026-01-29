@@ -255,8 +255,8 @@ static void on_gapc_pairing_succeed(uint8_t const conidx, uint32_t const metainf
 #if CONFIG_USE_DIRECT_ADVERTISING_WHEN_RESTART
 	storage_save(SETTINGS_NAME_PEER, &app_con_info.addr, sizeof(app_con_info.addr));
 #endif
-	uint16_t err = acc_mcc_discover(conidx, 1, GATT_INVALID_HDL, GATT_INVALID_HDL);
-	LOG_INF("acc_mcc_discover returned %d", err);
+	//uint16_t err = acc_mcc_discover(conidx, 1, GATT_INVALID_HDL, GATT_INVALID_HDL);
+	//LOG_INF("acc_mcc_discover returned %d", err);
 }
 
 static void on_gapc_pairing_failed(uint8_t const conidx, uint32_t const metainfo,
@@ -584,8 +584,8 @@ static int ble_stack_configure(uint8_t const role)
 
 #if CONFIG_BONDING_ALLOWED
 	/* Configure security level */
-	//gapm_le_configure_security_level(GAP_SEC1_AUTH_PAIR_ENC/*GAP_SEC1_SEC_CON_PAIR_ENC*/);
-	//LOG_INF("Security enabled for bonding");
+	gapm_le_configure_security_level(GAP_SEC1_SEC_CON_PAIR_ENC);
+	LOG_INF("Security enabled for bonding");
 #endif
 
 	gapm_le_set_appearance(APPEARANCE);
