@@ -48,7 +48,7 @@ config USE_DIRECTED_FAST_ADVERTISING
 config BONDING_ALLOWED
 	bool "Allow bonding"
 	default y
-
+	
 config PRIVACY_ENABLED
 	bool "Enable Privacy to use Random Private Resolvable Address"
 	default n

@@ -16,4 +16,5 @@ target_sources(app PRIVATE
     src/storage.c
     src/audio_datapath.c
     src/scan.c
+    src/shell_cmds.c
 )

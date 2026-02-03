@@ -313,7 +313,7 @@ static void on_gapc_pairing_req(uint8_t const conidx, uint32_t const metainfo,
 	LOG_DBG("Client %u pairing requested. auth_level:%u", conidx, auth_level);
 
 	gapc_pairing_t pairing_info = {
-		.auth = GAP_AUTH_REQ_SEC_CON_BOND,
+		.auth = GAP_AUTH_NONE,
 		.iocap = GAP_IO_CAP_DISPLAY_ONLY,
 		.ikey_dist = GAP_KDIST_ENCKEY | GAP_KDIST_IDKEY,
 		.key_size = GAP_KEY_LEN,
@@ -322,7 +322,7 @@ static void on_gapc_pairing_req(uint8_t const conidx, uint32_t const metainfo,
 	};
 
 	if (auth_level & GAP_AUTH_SEC_CON) {
-		pairing_info.auth = GAP_AUTH_REQ_SEC_CON_BOND;
+		pairing_info.auth = GAP_AUTH_NONE;
 	}
 
 	uint16_t const status = gapc_le_pairing_accept(conidx, true, &pairing_info, 0);
@@ -584,7 +584,7 @@ static int ble_stack_configure(uint8_t const role)
 
 #if CONFIG_BONDING_ALLOWED
 	/* Configure security level */
-	gapm_le_configure_security_level(GAP_SEC1_SEC_CON_PAIR_ENC);
+	gapm_le_configure_security_level(GAP_AUTH_NONE);
 	LOG_INF("Security enabled for bonding");
 #endif
 
