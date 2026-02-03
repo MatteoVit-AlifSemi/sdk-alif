@@ -46,4 +46,8 @@ int unicast_setup_streams(uint8_t con_lid);
  */
 int unicast_enable_streams(uint8_t con_lid);
 
+
+void volume_increase(void);
+void volume_decrease(void);
+
 #endif /* _UNICAST_SOURCE_H */

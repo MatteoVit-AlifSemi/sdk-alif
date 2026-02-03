@@ -15,6 +15,7 @@
 #include "bap_capa_cli.h"
 #include "bap_uc_cli.h"
 #include "ke_mem.h"
+#include "arc_vcc.h"
 
 #include "bluetooth/le_audio/audio_utils.h"
 
@@ -74,6 +75,8 @@ LOG_MODULE_REGISTER(unicast_source, CONFIG_UNICAST_SOURCE_LOG_LEVEL);
 #else
 #error "Invalid latency target"
 #endif
+
+#define USE_VCC
 
 /* FIXME: A single group cannot be used for bidirection and multiple acceptors */
 #define UC_GROUP_PER_PEER (CONFIG_LE_AUDIO_BIDIRECTIONAL && (CONFIG_NUMBER_OF_CLIENTS > 1))
@@ -1305,6 +1308,102 @@ static const struct bap_capa_cli_cb bap_capa_cli_callbacks = {
 };
 
 /* ---------------------------------------------------------------------------------------- */
+/* Volume Control Client */
+
+static void volume_control_client_cb_cmp_evt(uint8_t cmd_type, uint16_t status, uint8_t con_lid, uint8_t param)
+{
+	LOG_INF("volume_control_client_cb_cmp_evt, cmd_code %x", cmd_type);
+	switch (cmd_type)
+    {
+        case ARC_VCC_CMD_TYPE_DISCOVER:			
+			LOG_INF("volume_control_client_cb_cmp_evt, discover, param %x", param);			
+        	break;
+        case ARC_VCC_CMD_TYPE_CONTROL:			
+			LOG_INF("volume_control_client_cb_cmp_evt, control, param %x", param);
+        	break;
+		case ARC_VCC_CMD_TYPE_GET:
+			LOG_INF("volume_control_client_cb_cmp_evt, get, param %x", param);
+			break;
+		case ARC_VCC_CMD_TYPE_SET_CFG:
+			break;
+		default:
+			LOG_WRN("volume_control_client_cb_cmp_evt unsupported command, cmd_code %x", cmd_type);
+			break;
+	}
+}
+
+static void volume_control_client_cb_bond_data(uint8_t con_lid, arc_vcc_vcs_t* p_svc_info)
+{
+	LOG_INF("volume_control_client_cb_bond_data: con_lid %d", con_lid);
+}
+
+static void volume_control_client_cb_volume(uint8_t con_lid, uint8_t volume, uint8_t mute) 
+{
+	LOG_INF("volume_control_client_cb_volume: con_lid %d, volume %d, mute %d",
+		con_lid, volume, mute);
+}
+
+static void volume_control_client_cb_flags(uint8_t con_lid, uint8_t flags)
+{
+	LOG_INF("volume_control_client_cb_flags: con_lid %d, flags %d", con_lid, flags);
+}
+
+static void volume_control_client_cb_included_svc(uint8_t con_lid, uint16_t uuid, 
+	uint16_t shdl, uint16_t ehdl)
+{
+	LOG_INF("volume_control_client_cb_included_svc");
+}
+
+static void volume_control_client_cb_svc_changed(uint8_t con_lid)
+{
+	LOG_INF("volume_control_client_cb_svc_changed");
+}
+
+int init_volume_control_client(void)
+{
+	uint16_t err;
+		
+	static const arc_vcc_cb_t cbs_arc_vcc = {
+		.cb_cmp_evt = volume_control_client_cb_cmp_evt,
+		.cb_volume = volume_control_client_cb_volume,
+		.cb_flags = volume_control_client_cb_flags,
+		.cb_bond_data = volume_control_client_cb_bond_data,
+		.cb_included_svc = volume_control_client_cb_included_svc,
+		.cb_svc_changed = volume_control_client_cb_svc_changed,
+	};
+
+	err = arc_vcc_configure(&cbs_arc_vcc);
+
+	if (err != GAF_ERR_NO_ERROR) {
+		LOG_ERR("Unable to configure Volume Control Client! Error %u (0x%02X)", err, err);
+		return -1;
+	}
+
+	LOG_INF("Volume Control Client is configured");
+
+	return 0;
+}
+
+void volume_increase(void) 
+{
+	uint16_t err;
+	// TODO use proper con_lid
+	err = arc_vcc_volume_increase(0);
+	if (err)
+		LOG_ERR("arc_vcc_volume_increase returned %d", err);
+}
+
+void volume_decrease(void) 
+{
+	uint16_t err;
+	// TODO use proper con_lid
+	err = arc_vcc_volume_decrease(0);
+	if (err)
+		LOG_ERR("arc_vcc_volume_decrease returned %d", err);
+}
+
+
+/* ---------------------------------------------------------------------------------------- */
 
 int unicast_source_configure(void)
 {
@@ -1375,6 +1474,12 @@ int unicast_source_configure(void)
 	 */
 	unicast_env.datapath_config.pres_delay_us = 2 * MAX_TRANSPORT_LATENCY_MS;
 
+#ifdef USE_VCC
+	if (init_volume_control_client()) {
+		return -1;
+	}
+#endif
+
 	return 0;
 }
 
@@ -1388,6 +1493,11 @@ int unicast_source_discover(uint8_t const con_lid)
 		LOG_ERR("Failed to allocate unicast environment for connection:%u", con_lid);
 		return -ENOMEM;
 	}
+
+#ifdef USE_VCC
+	err = arc_vcc_discover(con_lid, GATT_MIN_HDL, GATT_MAX_HDL);
+	LOG_INF("arc_vcc_discover: err %d", err);
+#endif
 
 #if DISCOVER_PACS_BEFORE_ASCS
 	err = bap_capa_cli_discover(con_lid, GATT_INVALID_HDL, GATT_INVALID_HDL);
