@@ -1,0 +1,99 @@
+/* Copyright (C) 2025 Alif Semiconductor - All Rights Reserved.
+ * Use, distribution and modification of this code is permitted under the
+ * terms stated in the Alif Semiconductor Software License Agreement
+ *
+ * You should have received a copy of the Alif Semiconductor Software
+ * License Agreement with this file. If not, please write to:
+ * contact@alifsemi.com, or visit: https://alifsemi.com/license
+ *
+ */
+
+/* Enable to use Event Router driver instead of manual configuration
+ * When enabled:
+ * - DMA routing goes through event router driver
+ * - Manual event router configuration is disabled
+ * When disabled:
+ * - Direct DMA approach with manual event router programming
+ */
+#define USE_EVENT_ROUTER_DRIVER   1
+
+#if USE_EVENT_ROUTER_DRIVER
+#include <zephyr/dt-bindings/dma/alif_dma_event_router.h>
+#endif
+
+#define HCI_UART_DMA_RX_CH  0
+#define HCI_UART_DMA_RX_REQ 26
+#define HCI_UART_DMA_TX_CH  1
+#define HCI_UART_DMA_TX_REQ 27
+
+#define I2S0_DMA_RX_CH  2
+#define I2S0_DMA_RX_REQ 24
+#define I2S0_DMA_TX_CH  3
+#define I2S0_DMA_TX_REQ 28
+
+#define LPI2S_DMA_RX_CH  4
+#define LPI2S_DMA_RX_REQ 14
+#define LPI2S_DMA_TX_CH  5
+#define LPI2S_DMA_TX_REQ 15
+
+&dma2 {
+	dma-channels = <8>;
+	interrupts = <0 3>, <1 3>, <2 3>, <3 3>, <4 3>, <5 3>,
+		     <6 3>, <7 3>, <32 3>;
+	interrupt-names = "channel0", "channel1",
+			  "channel2", "channel3",
+			  "channel4", "channel5",
+			  "channel6", "channel7",
+			  "abort";
+
+};
+
+#if USE_EVENT_ROUTER_DRIVER
+/* Event Router driver approach: route through event router */
+
+&evtrtr2 {
+	status = "okay";
+};
+
+&i2s0 {
+	/*
+	 * Cell 0: ALIF_DMA_ENCODE(channel, dma_group, handshake)
+	 *   - channel: Physical DMA channel (2 for RX, 3 for TX)
+	 *   - dma_group: Input source selection (1) - selects which peripheral input
+	 *   - handshake: Enable hardware handshaking (1 for I2S)
+	 * Cell 1: Peripheral request number (24 for RX, 28 for TX)
+	 */
+	dmas = <&evtrtr2 ALIF_DMA_ENCODE(I2S0_DMA_RX_CH, 1, 1) I2S0_DMA_RX_REQ>,
+	       <&evtrtr2 ALIF_DMA_ENCODE(I2S0_DMA_TX_CH, 1, 1) I2S0_DMA_TX_REQ>;
+	dma-names = "rxdma", "txdma";
+};
+
+#else
+/* Direct DMA approach: manual event router configuration */
+
+&i2s0 {
+	/* Direct PL330 DMA specifier format:
+	 * Cell 0: PL330 physical channel (2 for RX, 3 for TX)
+	 * Cell 1: PL330 peripheral request (24 for RX, 28 for TX)
+	 * Note: Event router must be manually configured
+	 */
+	dmas = <&dma2 I2S0_DMA_RX_CH I2S0_DMA_RX_REQ>,
+	       <&dma2 I2S0_DMA_TX_CH I2S0_DMA_TX_REQ>;
+	dma-names = "rxdma", "txdma";
+};
+
+#endif /* USE_EVENT_ROUTER_DRIVER */
+
+/*
+&i2s2 {
+	dmas = <&dma2 LPI2S_DMA_RX_CH LPI2S_DMA_RX_REQ>,
+	       <&dma2 LPI2S_DMA_TX_CH LPI2S_DMA_TX_REQ>;
+	dma-names = "rxdma", "txdma";
+};
+
+&uart_hci {
+	dmas = <&dma2 HCI_UART_DMA_RX_CH HCI_UART_DMA_RX_REQ>,
+	       <&dma2 HCI_UART_DMA_TX_CH HCI_UART_DMA_TX_REQ>;
+	dma-names = "rx", "tx";
+};
+*/

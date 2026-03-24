@@ -1,0 +1,32 @@
+# Copyright (C) 2025 Alif Semiconductor - All Rights Reserved.
+# Use, distribution and modification of this code is permitted under the
+# terms stated in the Alif Semiconductor Software License Agreement
+#
+# You should have received a copy of the Alif Semiconductor Software
+# License Agreement with this file. If not, please write to:
+# contact@alifsemi.com, or visit: https://alifsemi.com/license
+
+cmake_minimum_required(VERSION 3.20.0)
+
+# Include BLE Power Management snippet by default
+if(NOT pm-ble IN_LIST SNIPPET)
+  set(SNIPPET pm-ble ${SNIPPET} CACHE STRING "" FORCE)
+endif()
+
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+project(le_audio_unicast_acceptor)
+
+set(COMMON_DIR ${CMAKE_CURRENT_LIST_DIR}/../../common)
+
+target_sources(app PRIVATE
+    src/main.c
+    src/unicast_acceptor.c
+    src/audio_datapath.c
+    src/storage.c
+    ${COMMON_DIR}/power_mgr.c
+)
+
+# Include directories
+target_include_directories(app PRIVATE
+	${COMMON_DIR}
+)
