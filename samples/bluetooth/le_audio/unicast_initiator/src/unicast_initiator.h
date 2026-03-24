@@ -61,4 +61,20 @@ int unicast_volume_up_all(void);
  */
 int unicast_volume_down_all(void);
 
+/**
+ * @brief Next track
+ *
+ * @return 0 on success
+ */
+int media_control_next_track(void);
+
+/**
+ * @brief Previous track
+ *
+ * @return 0 on success
+ */
+int media_control_prev_track(void);
+
+void media_control_next_track(void)
+
 #endif /* _UNICAST_INITIATOR_H */

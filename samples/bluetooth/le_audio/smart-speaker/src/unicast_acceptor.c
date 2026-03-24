@@ -117,6 +117,8 @@ struct ase_instance {
 	uint8_t stream_lid;
 	/** Stream direction: Source or Sink */
 	uint8_t dir;
+	/** Connection idx */
+	uint8_t conidx;
 };
 
 struct ase_config {
@@ -144,6 +146,7 @@ struct unicast_env {
 /** Unicast environment */
 static struct unicast_env unicast_env = {
 	.advertising_ongoing = false,
+
 };
 
 /** Array providing string description of each ASE state */
@@ -452,6 +455,8 @@ static void on_unicast_server_cb_cis_state(uint8_t const stream_lid, uint8_t con
 	if (p_ase) {
 		p_ase->stream_lid = stream_lid;
 	}
+
+	p_ase->conidx = conidx;
 
 	/* Ignore other prints if the handle is undefined */
 	if (conhdl == GAP_INVALID_CONHDL) {
@@ -1237,14 +1242,11 @@ int init_volume_control_service(void)
 
 int volume_up_all(void)
 {
-	for (size_t index = 0; index < ARRAY_SIZE(unicast_env.peers); index++) {
-		struct unicast_peer *const p_unicast_env = &unicast_env.peers[index];
-
-		if (p_unicast_env->conidx == GAP_INVALID_CONIDX) {
+	for (size_t index = 0; index < ARRAY_SIZE(unicast_env.ase); index++) {
+		if (unicast_env.ase[index]->conidx == GAP_INVALID_CONIDX) {
 			continue;
 		}
-
-		arc_vcc_volume_increase(p_unicast_env->conidx);
+		arc_vcc_volume_increase(unicast_env.ase[index]->conidx);
 	}
 
 	return 0;
@@ -1252,14 +1254,11 @@ int volume_up_all(void)
 
 int volume_down_all(void)
 {
-	for (size_t index = 0; index < ARRAY_SIZE(unicast_env.peers); index++) {
-		struct unicast_peer *const p_unicast_env = &unicast_env.peers[index];
-
-		if (p_unicast_env->conidx == GAP_INVALID_CONIDX) {
+	for (size_t index = 0; index < ARRAY_SIZE(unicast_env.ase); index++) {
+		if (unicast_env.ase[index]->conidx == GAP_INVALID_CONIDX) {
 			continue;
 		}
-
-		arc_vcc_volume_decrease(p_unicast_env->conidx);
+		arc_vcc_volume_decrease(unicast_env.ase[index]->conidx);
 	}
 
 	return 0;
@@ -1430,13 +1429,15 @@ int init_media_control_client(void)
 	return 0;
 }
 
-void next_track(void) {
-	//acc_mcc_control(con_lid, media_lid, ACC_MC_OPCODE_NEXT_TRACK, 0, 0);
+int media_control_next_track(void) {
+	// con_lid, media_lid
+	acc_mcc_control(0, 0, ACC_MC_OPCODE_NEXT_TRACK, 0, 0);
+	return 0;
 }
 
-
-void prev_track(void) {
-	//acc_mcc_control(con_lid, media_lid, ACC_MC_OPCODE_PREV_TRACK, 0, 0);
+int media_control_prev_track(void) {
+	acc_mcc_control(0, 0, ACC_MC_OPCODE_PREV_TRACK, 0, 0);
+	return 0;
 }
 
 /* ---------------------------------------------------------------------------------------- */
@@ -1512,6 +1513,7 @@ int unicast_acceptor_init(void)
 		unicast_env.ase[iter].stream_lid = GAF_INVALID_LID;
 		unicast_env.ase[iter].dir =
 			(iter < uc_srv_cfg.nb_ase_chars_sink) ? ASE_DIR_SINK : ASE_DIR_SOURCE;
+		unicast_env.ase[iter].conidx = GAP_INVALID_CONIDX;
 	}
 
 	err = configure_bap_capabilities(LOCATION_SINK, LOCATION_SOURCE);
