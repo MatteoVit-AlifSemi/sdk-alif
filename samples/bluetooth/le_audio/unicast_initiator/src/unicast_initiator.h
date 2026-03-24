@@ -47,46 +47,4 @@ int unicast_setup_streams(uint8_t con_lid);
  */
 int unicast_enable_streams(uint8_t con_lid);
 
-/**
- * @brief Volume up
- *
- * @return 0 on success
- */
-int unicast_volume_up(void);
-
-/**
- * @brief Volume down 
- *
- * @return 0 on success
- */
-int unicast_volume_down(void);
-
-/**
- * @brief Next track
- *
- * @return 0 on success
- */
-int media_control_next_track(void);
-
-/**
- * @brief Previous track
- *
- * @return 0 on success
- */
-int media_control_prev_track(void);
-
-/**
- * @brief Play
- *
- * @return 0 on success
- */
-int media_control_play(void);
-
-/**
- * @brief Previous track
- *
- * @return 0 on success
- */
-int media_control_pause(void);
-
 #endif /* _UNICAST_INITIATOR_H */

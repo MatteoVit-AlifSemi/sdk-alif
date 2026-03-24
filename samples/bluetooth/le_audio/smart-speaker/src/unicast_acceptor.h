@@ -33,4 +33,46 @@ int unicast_acceptor_adv_start(void const * const p_address);
  */
 int unicast_acceptor_adv_stop(void);
 
+/**
+ * @brief Volume up
+ *
+ * @return 0 on success
+ */
+int volume_up(void);
+
+/**
+ * @brief Volume down
+ *
+ * @return 0 on success
+ */
+int volume_down(void);
+
+/**
+ * @brief Next track
+ *
+ * @return 0 on success
+ */
+int media_control_next_track(void);
+
+/**
+ * @brief Previous track
+ *
+ * @return 0 on success
+ */
+int media_control_prev_track(void);
+
+/**
+ * @brief Play
+ *
+ * @return 0 on success
+ */
+int media_control_play(void);
+
+/**
+ * @brief Previous track
+ *
+ * @return 0 on success
+ */
+int media_control_pause(void);
+
 #endif /* _UNICAST_ACCEPTOR_H */

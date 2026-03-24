@@ -24,7 +24,33 @@
 		/*i2s-mic = &i2s2;*/
 	};
 
-	/delete-node/ buttons;
+	buttons {
+		/* JOY_SW1 */
+		button_up: button_up {
+			gpios = < &gpio5 0x0 0x0 >;
+			label = "VOL_UP";
+		};
+		/* JOY_SW2 */
+		button_down: button_down {
+			gpios = < &gpio5 0x4 0x0 >;
+			label = "VOL_DOWN";
+		};
+		/* JOY_SW3 */
+		button_left: button_left {
+			gpios = < &gpio5 0x5 0x0 >;
+			label = "TRACK_PREV";
+		};
+		/* JOY_SW4 */
+		button_right: button_right {
+			gpios = < &gpio5 0x6 0x0 >;
+			label = "TRACK_NEXT";
+		};
+		/* JOY_SW5 */
+		button_centre: button_centre {
+			gpios = < &gpio5 0x6 0x0 >;
+			label = "PLAY_PAUSE";
+		};
+	};
 };
 
 #if 0 /* this needs some more changes... */

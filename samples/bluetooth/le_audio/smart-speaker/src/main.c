@@ -84,6 +84,128 @@ static const gap_sec_key_t gapm_irk = {.key = {0xA1, 0xB2, 0xC3, 0xD4, 0xE5, 0xF
 					       0x22, 0x33, 0x44, 0x55, 0x66, 0x77, IRK_VAL}};
 
 /* ---------------------------------------------------------------------------------------- */
+
+void joystick_up(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	volume_up();
+}
+static K_WORK_DEFINE(joystick_up_work, joystick_up);
+
+void joystick_down(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	volume_down();
+}
+static K_WORK_DEFINE(joystick_down_work, joystick_down);
+
+void joystick_left(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	media_control_prev_track();
+}
+static K_WORK_DEFINE(joystick_left_work, joystick_left);
+
+void joystick_right(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	media_control_next_track();
+}
+static K_WORK_DEFINE(joystick_right_work, joystick_right);
+
+#include <zephyr/drivers/gpio.h>
+
+struct gpio_data {
+	const struct gpio_dt_spec spec;
+	struct gpio_callback cb_data;
+	struct k_work *execute_func;
+	uint32_t last_clicked_ms;
+};
+
+#define BUTTON_DEBOUNCE_MS 15
+
+static bool check_debounce(uint32_t *const p_last_time_ms)
+{
+	uint32_t const current_time_ms = k_uptime_get_32();
+
+	if ((current_time_ms - *p_last_time_ms) < BUTTON_DEBOUNCE_MS) {
+		return false;
+	}
+
+	*p_last_time_ms = current_time_ms;
+	return true;
+}
+
+static void gpio_isr_handler(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+{
+	struct gpio_data *p_data = CONTAINER_OF(cb, struct gpio_data, cb_data);
+	gpio_port_value_t value;
+
+	if (gpio_port_get(dev, &value)) {
+		LOG_ERR("Failed to read button state");
+		return;
+	}
+
+	if (!check_debounce(&p_data->last_clicked_ms)) {
+		return;
+	}
+
+	if (value & pins) {
+		/* ignore invalid state */
+		return;
+	}
+
+	if (!p_data->execute_func) {
+		return;
+	}
+
+	k_work_submit(p_data->execute_func);
+}
+
+static int configure_button(struct gpio_data *p_button)
+{
+	if (!p_button->spec.port) {
+		LOG_ERR("Button is not valid!");
+		return -EEXIST;
+	}
+
+	/* Configure button */
+	if (!gpio_is_ready_dt(&p_button->spec)) {
+		LOG_ERR("Button is not ready");
+		return -EEXIST;
+	}
+
+	if (gpio_pin_configure_dt(&p_button->spec, GPIO_INPUT)) {
+		LOG_ERR("Button configure failed");
+		return -EIO;
+	}
+
+	if (gpio_pin_interrupt_configure_dt(&p_button->spec, GPIO_INT_EDGE_FALLING)) {
+		LOG_ERR("button int conf failed");
+		return -EIO;
+	}
+
+	gpio_init_callback(&p_button->cb_data, gpio_isr_handler, BIT(p_button->spec.pin));
+	if (gpio_add_callback(p_button->spec.port, &p_button->cb_data)) {
+		LOG_ERR("cb add failed");
+		return -EIO;
+	}
+
+	return 0;
+}
+
+static struct gpio_data joystick_conf[] = {
+	{.spec = GPIO_DT_SPEC_GET_OR(DT_NODELABEL(button_up), gpios, {0}),
+	 .execute_func = &joystick_up_work},
+	{.spec = GPIO_DT_SPEC_GET_OR(DT_NODELABEL(button_down), gpios, {0}),
+	 .execute_func = &joystick_down_work},
+	{.spec = GPIO_DT_SPEC_GET_OR(DT_NODELABEL(button_left), gpios, {0}),
+	 .execute_func = &joystick_left_work},
+	{.spec = GPIO_DT_SPEC_GET_OR(DT_NODELABEL(button_right), gpios, {0}),
+	.execute_func = &joystick_right_work},
+};
+
+/* ---------------------------------------------------------------------------------------- */
 /* Settings NVM storage handlers */
 
 static int storage_load_bond_data(void)
@@ -655,6 +777,13 @@ int main(void)
 
 	if (unicast_acceptor_init()) {
 		return -1;
+	}
+
+	for (size_t iter = 0; iter < ARRAY_SIZE(joystick_conf); iter++) {
+		ret = configure_button(&joystick_conf[iter]);
+		if (ret) {
+			return ret;
+		}
 	}
 
 	if (unicast_acceptor_adv_start(APP_CON_ADDR)) {
