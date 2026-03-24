@@ -1240,27 +1240,29 @@ int init_volume_control_service(void)
 	return 0;
 }
 
-int volume_up_all(void)
+int volume_up(void)
 {
-	for (size_t index = 0; index < ARRAY_SIZE(unicast_env.ase); index++) {
-		if (unicast_env.ase[index]->conidx == GAP_INVALID_CONIDX) {
+	/*for (size_t index = 0; index < ARRAY_SIZE(unicast_env.ase); index++) {
+		if (unicast_env.ase[index].conidx == GAP_INVALID_CONIDX) {
 			continue;
 		}
-		arc_vcc_volume_increase(unicast_env.ase[index]->conidx);
-	}
+		arc_vcs_volume_increase(unicast_env.ase[index].conidx);
+	}*/
 
+	arc_vcs_volume_increase();
 	return 0;
 }
 
-int volume_down_all(void)
+int volume_down(void)
 {
-	for (size_t index = 0; index < ARRAY_SIZE(unicast_env.ase); index++) {
-		if (unicast_env.ase[index]->conidx == GAP_INVALID_CONIDX) {
+	/*for (size_t index = 0; index < ARRAY_SIZE(unicast_env.ase); index++) {
+		if (unicast_env.ase[index].conidx == GAP_INVALID_CONIDX) {
 			continue;
 		}
-		arc_vcc_volume_decrease(unicast_env.ase[index]->conidx);
-	}
+		arc_vcs_volume_decrease(unicast_env.ase[index].conidx);
+	}*/
 
+	arc_vcs_volume_decrease();
 	return 0;
 }
 
@@ -1437,6 +1439,17 @@ int media_control_next_track(void) {
 
 int media_control_prev_track(void) {
 	acc_mcc_control(0, 0, ACC_MC_OPCODE_PREV_TRACK, 0, 0);
+	return 0;
+}
+
+int media_control_play(void) {
+	// con_lid, media_lid
+	acc_mcc_control(0, 0, ACC_MC_OPCODE_PLAY, 0, 0);
+	return 0;
+}
+
+int media_control_pause(void) {
+	acc_mcc_control(0, 0, ACC_MC_OPCODE_PAUSE, 0, 0);
 	return 0;
 }
 

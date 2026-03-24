@@ -48,18 +48,18 @@ int unicast_setup_streams(uint8_t con_lid);
 int unicast_enable_streams(uint8_t con_lid);
 
 /**
- * @brief Volume up all peripherals
+ * @brief Volume up
  *
  * @return 0 on success
  */
-int unicast_volume_up_all(void);
+int unicast_volume_up(void);
 
 /**
- * @brief Volume down all peripherals
+ * @brief Volume down 
  *
  * @return 0 on success
  */
-int unicast_volume_down_all(void);
+int unicast_volume_down(void);
 
 /**
  * @brief Next track
@@ -75,6 +75,18 @@ int media_control_next_track(void);
  */
 int media_control_prev_track(void);
 
-void media_control_next_track(void)
+/**
+ * @brief Play
+ *
+ * @return 0 on success
+ */
+int media_control_play(void);
+
+/**
+ * @brief Previous track
+ *
+ * @return 0 on success
+ */
+int media_control_pause(void);
 
 #endif /* _UNICAST_INITIATOR_H */
