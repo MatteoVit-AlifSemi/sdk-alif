@@ -22,6 +22,7 @@
 #include "gapc_le.h"
 #include "gapc_sec.h"
 #include "power_mgr.h"
+#include "acc_mcc.h"
 
 #include "unicast_acceptor.h"
 #include "storage.h"
@@ -255,6 +256,10 @@ static void on_gapc_pairing_succeed(uint8_t const conidx, uint32_t const metainf
 #if CONFIG_USE_DIRECT_ADVERTISING_WHEN_RESTART
 	storage_save(SETTINGS_NAME_PEER, &app_con_info.addr, sizeof(app_con_info.addr));
 #endif
+
+	uint16_t err;
+	err = acc_mcc_discover(conidx, 0, GATT_INVALID_HDL, GATT_INVALID_HDL);
+	LOG_INF("acc_mcc_discover returned %d", err);
 }
 
 static void on_gapc_pairing_failed(uint8_t const conidx, uint32_t const metainfo,
