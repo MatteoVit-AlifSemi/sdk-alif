@@ -6,13 +6,13 @@
 # License Agreement with this file. If not, please write to:
 # contact@alifsemi.com, or visit: https://alifsemi.com/license
 
-menu "Alif Bluetooth LE Audio Unicast Acceptor"
+menu "Alif Bluetooth LE Audio Smart Speaker example"
 
 config BLE_DEVICE_NAME
 	string "BLE device name"
-	default "ALIF_CIS_SRV_L" if UNICAST_LOCATION_LEFT
-	default "ALIF_CIS_SRV_R" if UNICAST_LOCATION_RIGHT
-	default "ALIF_CIS_SRV" if UNICAST_LOCATION_BOTH
+	default "ALIF_SMARTSPKR_L" if UNICAST_LOCATION_LEFT
+	default "ALIF_SMARTSPKR_R" if UNICAST_LOCATION_RIGHT
+	default "ALIF_SMARTSPKR" if UNICAST_LOCATION_BOTH
 	help
 	  Device name to be included in advertising packets
 

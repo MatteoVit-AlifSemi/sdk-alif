@@ -14,7 +14,7 @@ if(NOT pm-ble IN_LIST SNIPPET)
 endif()
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(le_audio_unicast_acceptor)
+project(le_audio_smart_speaker)
 
 set(COMMON_DIR ${CMAKE_CURRENT_LIST_DIR}/../../common)
 
